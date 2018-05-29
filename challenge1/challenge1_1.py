@@ -10,22 +10,24 @@ def parse_arguments(arguments: list):
 
     parser.add_argument('--physical_currency', action="store", default="CNY")
     parser.add_argument('--digital_currency', action="store", default="BTC")
-    parser.add_argument('--start_date', action="store", default="")
-    parser.add_argument('--end_date', action="store", default="")
+    parser.add_argument('--start_date', action="store", default="", help="Format is yyyy-mm-dd")
+    parser.add_argument('--end_date', action="store", default="",  help="Format is yyyy-mm-dd")
     parser.add_argument('--output', action="store", default="currency_data.csv")
     return vars(parser.parse_args(arguments))
 
+
+def generate_api_request_string(digital_currency, physical_currency):
+    return ("https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY"
+            "&symbol=%s&market=%s&apikey=demo&datatype=csv" %
+            (digital_currency, physical_currency))
 
 
 def fetch_currency_data(digital_currency, physical_currency):
     """Fetches currency data from the server in the passed currencies. Returns a pandas dataframe"""
     data = pd.read_csv(
-        "https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY"
-        "&symbol=%s&market=%s&apikey=demo&datatype=csv" %
-        (digital_currency, physical_currency))
-    data['timestamp'] = data['timestamp'].apply(lambda t: pd.to_datetime(t, format='%Y-%m-%d'))
+        generate_api_request_string(digital_currency, physical_currency)
+    )
     return data
-
 
 
 def filter_by_start_date(data, start_date):
@@ -44,15 +46,15 @@ def generate_data_set(arguments):
 
     if arguments['start_date'] != "":
         data = filter_by_start_date(data, arguments['start_date'])
-    if arguments['end_date'] != "" in arguments:
+    if arguments['end_date'] != "":
         data = filter_by_end_date(data, arguments['end_date'])
     return data
 
 
 def main(arguments):
     try:
-        data = generate_data_set(arguments) # generate required data set
-        data.to_csv(arguments['output']) # stores said data set
+        data = generate_data_set(arguments)  # generate required data set
+        data.to_csv(arguments['output'])  # stores said data set
     except:
         print("Could not load data")
 
